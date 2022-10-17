@@ -23,63 +23,80 @@ app.use((req,res,next) =>{ //for all routes
 //parse data in body as JSON
 router.use(express.json());
 
-//get list of parts
-router.get('/',(req,res)=>{
-    res.send(parts);
-});
+//Routes for /api/parts
+router.route('/') //all the routes to the base prefix
+    //get list of parts
+    .get((req,res)=>{
+        res.send(parts);
+    })
 
-//get details for a given part
-router.get('/:part_id',(req,res)=>{
-    const id = req.params.part_id;
-    const part = parts.find(p => p.id === parseInt(id));
-    if(part){
-        res.send(part);
-    }
-    else{
-        res.status(404).send(`Part ${id} was not found!`);
-    }
-});
+    //create a part
+    .post((req,res)=>{
+        const newpart = req.body;
+        newpart.id = 100 + parts.length;
+        if(newpart.name){
+            parts.push(newpart);
+            res.send(newpart);
+        }
+        else{
+            res.status(400).send("missing name");
+        }
+    })
 
-//create/replace part data for a given ID
-router.put('/:id',(req,res) =>{
-    const newpart = req.body;
-    console.log("Part: ",newpart);
+router.route('/:id') //All routes with a part ID
+
+    //Get details of a part
+    .get((req,res) =>{
+        const part = parts.find(p => p.id === parseInt(req.params.id));
+        if(part){
+            res.send(part);
+        }
+        else{
+            res.status(404).send(`Part ${req.params.id} was not found!`);
+        }
     
-    //add id field
-    newpart.id = parseInt(req.params.id);
 
-    //replace part with new one
-    const part = parts.findIndex(p => p.id === parseInt(newpart.id));
-    if(part <0 ){
-    console.log('Creating new part');
-    parts.push(newpart);
-    }
-    else{
-        console.log('Modifying part ',req.params.id);
-        parts[part] = newpart;
-    }
-    res.send(newpart);
-});
+    })
+    //create/replace part data for a given id
+    .put((req,res) =>{
+        const newpart = req.body;
+        console.log("Part: ",newpart);
+        
+        //add id field
+        newpart.id = parseInt(req.params.id);
+    
+        //replace part with new one
+        const part = parts.findIndex(p => p.id === parseInt(newpart.id));
+        if(part <0 ){
+        console.log('Creating new part');
+        parts.push(newpart);
+        }
+        else{
+            console.log('Modifying part ',req.params.id);
+            parts[part] = newpart;
+        }
+        res.send(newpart);
 
+    })
+    //update stock level
+    .post((req,res) =>{
+        const newpart = req.body;
+        console.log("Part: ",newpart);
+        
+        
+        //find the part
+        const part = parts.findIndex(p => p.id === parseInt(req.params.id));
+        if(part <0 ){//not dound
+        res.status(404).send(`Part ${req.params.id} not found`);
+        }
+        else{
+            console.log('changing stock for ',req.params.id);
+            parts[part].stock += parseInt(req.body.stock); //stock property must exist
+            res.send(parts[part]);
+        }    
 
-//update stock level
-router.post('/:id',(req,res)=>{
-    const newpart = req.body;
-    console.log("Part: ",newpart);
+    })
     
-    
-    //find the part
-    const part = parts.findIndex(p => p.id === parseInt(req.params.id));
-    if(part <0 ){//not dound
-    res.status(404).send(`Part ${req.params.id} not found`);
-    }
-    else{
-        console.log('changing stock for ',req.params.id);
-        parts[part].stock += parseInt(req.body.stock); //stock property must exist
-        res.send(req.body);
-    }
-    
-});
 
 //install the router at /api/parts
 app.use('/api/parts',router);
