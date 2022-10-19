@@ -1,2 +1,2 @@
-# se3316-kabdo2-lab3
+# partsdb
 Web application for a parts DB
